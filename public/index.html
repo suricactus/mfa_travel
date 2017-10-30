@@ -71,6 +71,11 @@
 
   <script>
     (function(w, d) {
+      const VISA_ID_CARD = 'VISA_ID_CARD';
+      const VISA_FREE = 'VISA_FREE';
+      const VISA_ON_ARRIVAL = 'VISA_ON_ARRIVAL';
+      const VISA_E = 'VISA_E';
+      const VISA_REQUIRED = 'VISA_REQUIRED';
       const i18n = {
         about: 'За приложението',
         legend: 'Легенда',
@@ -92,16 +97,19 @@
         status5: 'Предупреждение за преустановяване на всякакви пътувания и незабавно напускане на страната',
         requiredDocuments: 'Необходими документи',
         mfaStatus: 'Обстановка',
-        withoutPassport: 'Само с лична карта',
-        doesntRequireVisa: 'Не изисква виза',
-        requiresVisa: 'Изисква виза',
+        visaType: 'Визов режим',
+        [ VISA_ID_CARD ]: 'Без виза, с лична карта',
+        [ VISA_FREE ]: 'Без виза',
+        [ VISA_E ]: 'Електронна заявка за виза',
+        [ VISA_ON_ARRIVAL ]: 'Виза при влизане',
+        [ VISA_REQUIRED ]: 'Изисква виза',
         modalTitle: 'Пътуване в чужбина',
-        modalContent: `<p>Събрани данни от <a href="http://www.mfa.bg">Министерство на външните работи</a> на Република България относно необходимите документи и препоръки за пътуване в чужбина. Данните се обновяват автоматично при промяна на сайта на министерството.</p>
+        modalContent: `<p>Събрани данни от <a href="http://www.mfa.bg" target="_blank">Министерство на външните работи</a> на Република България относно необходимите документи и препоръки за пътуване в чужбина. Данните се обновяват автоматично при промяна на сайта на министерството. Информацията за вида на необходимата виза е от <a href="https://www.passportindex.org/" target="_blank">World Passport Index</a></p>
 
 <p>Картата разполага с два слоя:
 <ul>
   <li><strong>Обстановка</strong> - актуално състояние на обстановката в съответната страна и препоръката на Министерството на външните работи относно пътуване до там</li>
-  <li><strong>Необходими документи</strong> - необходими документи при пътуване в чужбина. В някои страни от Европа е разрешено пътуването само с лична карта, във всички останали е необходим международен паспорт.</li>
+  <li><strong>Необходими документи</strong> - необходими документи при пътуване в чужбина. В някои страни от Европа е разрешено пътуването само с лична карта, във всички останали е необходим международен паспорт, а в голяма част от страните и виза.</li>
 </ul>
 </p>
 
@@ -127,15 +135,23 @@
         default: 'grey'
       };
       const styles = {
-        withoutPassport: {
+        [VISA_ID_CARD]: {
+          ...defaultStyle,
+          fillColor: 'darkgreen',
+        },
+        [VISA_FREE]: {
           ...defaultStyle,
           fillColor: 'green',
         },
-        doesntRequireVisa: {
+        [VISA_E]: {
           ...defaultStyle,
-          fillColor: 'lightgreen',
+          fillColor: 'limegreen',
         },
-        requiresVisa: {
+        [VISA_ON_ARRIVAL]: {
+          ...defaultStyle,
+          fillColor: 'greenyellow',
+        },
+        [VISA_REQUIRED]: {
           ...defaultStyle,
           fillColor: 'red',
         },
@@ -177,8 +193,9 @@
         }
         
         if(!feature.properties.home_country) {
-          table.push([i18n.requires_passport, humanizeFlag(feature.properties.requires_passport)]);
-          table.push([i18n.requires_visa, humanizeFlag(feature.properties.requires_visa)]); 
+          // table.push([i18n.requires_passport, humanizeFlag(feature.properties.requires_passport)]);
+          // table.push([i18n.requires_visa, humanizeFlag(feature.properties.requires_visa)]); 
+          table.push([i18n.visaType, i18n[feature.properties.visa]]); 
         }
         if(feature.properties.notes) {
           table.push([i18n.notes, feature.properties.notes])
@@ -207,15 +224,9 @@
         style: (feature) => {
           if(feature.properties.home_country) {
             return styles.home;
-          } else if (feature.properties.requires_passport === false) {
-            return styles.withoutPassport;
-          } else if (feature.properties.requires_visa === true) {
-            return styles.requiresVisa;
-          } else if( feature.properties.requires_visa === false) {
-            return styles.doesntRequireVisa;
           }
 
-          return styles.default;
+          return styles[ feature.properties.visa ] || styles.default;
         },
         onEachFeature: (feature, layer) => {
           layer.bindTooltip(feature.properties.name_bg || feature.properties.name_en, { sticky: true })
@@ -268,9 +279,11 @@
   
       const documentsLegend = createLegend([
         { msg: i18n.unknown, color: styles.default.fillColor },
-        { msg: i18n.withoutPassport, color: styles.withoutPassport.fillColor },
-        { msg: i18n.requiresVisa, color: styles.requiresVisa.fillColor },
-        { msg: i18n.doesntRequireVisa, color: styles.doesntRequireVisa.fillColor }
+        { msg: i18n[ VISA_ID_CARD ], color: styles[ VISA_ID_CARD ].fillColor },
+        { msg: i18n[ VISA_FREE ], color: styles[ VISA_FREE ].fillColor },
+        { msg: i18n[ VISA_E ], color: styles[ VISA_E ].fillColor },
+        { msg: i18n[ VISA_ON_ARRIVAL ], color: styles[ VISA_ON_ARRIVAL ].fillColor },
+        { msg: i18n[ VISA_REQUIRED ], color: styles[ VISA_REQUIRED ].fillColor },
       ]);
 
       const baseMaps = {
@@ -392,6 +405,16 @@
 
 
     })(window, document);
+  </script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-73117681-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-73117681-1');
   </script>
 </body>
 </html>
