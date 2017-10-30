@@ -201,7 +201,7 @@
         return colors[status] || colors['default']; 
       };
 
-      const documentsLayer = L.geoJson.ajax('../data/countries_final.geo.json', {
+      const documentsLayer = L.geoJson.ajax('./data/countries_final.geo.json', {
         style: (feature) => {
           if(feature.properties.home_country) {
             return styles.home;
@@ -221,7 +221,7 @@
         },
       });
 
-      const recommendationsLayer = L.geoJson.ajax('../data/countries_final.geo.json', {
+      const recommendationsLayer = L.geoJson.ajax('./data/countries_final.geo.json', {
         style: (feature) => {
           if(feature.properties.home_country) {
             return styles.home;
