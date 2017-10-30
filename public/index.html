@@ -86,7 +86,7 @@
         requires_passport: 'Изисква паспорт',
         requires_visa: 'Изисква виза',
         notes: 'Забележка',
-        unknown: 'Неизвестно',
+        unknown: 'Без информация',
         more: 'Още',
         mfa: 'МвНР',
         status: 'Обстановка',
@@ -195,8 +195,10 @@
         if(!feature.properties.home_country) {
           // table.push([i18n.requires_passport, humanizeFlag(feature.properties.requires_passport)]);
           // table.push([i18n.requires_visa, humanizeFlag(feature.properties.requires_visa)]); 
-          table.push([i18n.visaType, i18n[feature.properties.visa]]); 
+        
+          table.push([i18n.visaType, i18n[feature.properties.visa] || i18n.unknown]); 
         }
+
         if(feature.properties.notes) {
           table.push([i18n.notes, feature.properties.notes])
         }
