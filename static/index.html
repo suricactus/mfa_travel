@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Пътуване в чужбина</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.2.0/dist/leaflet.css"
+  integrity="sha512-M2wvCLH6DSRazYeZRIm1JnYyh22purTM+FDB5CsyxtQJYeKq83arPe5wgbNmcFXGqiSH2XR8dT/fJISVA1r/zQ=="
+  crossorigin=""/>
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/leaflet-search@2.3.6/dist/leaflet-search.src.css">
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/leaflet-search@2.3.6/dist/leaflet-search.mobile.src.css">
+  <link rel="stylesheet" type="text/css" href="https://cdn.rawgit.com/mapshakers/leaflet-control-window/master/src/L.Control.Window.css">
+  <script src="https://unpkg.com/leaflet@1.2.0/dist/leaflet.js"
+  integrity="sha512-lInM/apFSqyy1o6s89K4iQUKg6ppXEgsVxT35HbzUupEVRh2Eu9Wdl4tHj7dZO0s1uvplcYGmt3498TtHq+log=="
+  crossorigin=""></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-ajax/2.1.0/leaflet.ajax.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet-search@2.3.6/dist/leaflet-search.src.min.js" type="text/javascript" charset="utf-8"></script>
+  <script src="https://cdn.rawgit.com/mapshakers/leaflet-control-window/master/src/L.Control.Window.js" type="text/javascript" charset="utf-8"></script>
+
+  <style type="text/css" media="screen">
+    html,
+    body,
+    #map { 
+      height: 100%; 
+      width: 100%;
+      padding: 0;
+      margin: 0;
+    }
+
+    .legend {
+      max-height: 50%;
+      overflow: auto;
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 1rem;
+      padding: 0.5rem;
+    }
+
+    .limited-legend {
+      max-width: 33%;
+    }
+
+    .legend i {
+      display: inline-block;
+      width: .5rem;
+      height: .5rem;
+      margin-right: 0.5rem
+    }
+
+    .popup-table tr td:first-child {
+      font-weight: bold;
+    }
+
+    .leaflet-control-custom {
+      width: 32px;
+      height: 32px;
+      background-color: white;
+      background-position: center center;
+      background-repeat: no-repeat;
+      background-size: 80%;
+    }
+
+    .leaflet-control-active {
+      background-color: lightgrey;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <script>
+    (function(w, d) {
+      const i18n = {
+        about: 'За приложението',
+        legend: 'Легенда',
+        no: 'Не',
+        yes: 'Да',
+        name: 'Име',
+        iso_code: 'ISO код',
+        requires_passport: 'Изисква паспорт',
+        requires_visa: 'Изисква виза',
+        notes: 'Забележка',
+        unknown: 'Неизвестно',
+        more: 'Още',
+        mfa: 'МвНР',
+        status: 'Обстановка',
+        status1: 'Без особени препоръки',
+        status2: 'Повишено внимание (осведомете се за актуалната обстановка в страната)',
+        status3: 'Повишено ниво за риск (препоръка да не се пътува в определи райони на страната освен при необходимост)',
+        status4: 'Предупреждение за преустановяване на всякакви пътувания в цялата страна (освен при крайна необходимост)',
+        status5: 'Предупреждение за преустановяване на всякакви пътувания и незабавно напускане на страната',
+        requiredDocuments: 'Необходими документи',
+        mfaStatus: 'Обстановка',
+        withoutPassport: 'Само с лична карта',
+        doesntRequireVisa: 'Не изисква виза',
+        requiresVisa: 'Изисква виза',
+        modalTitle: 'Пътуване в чужбина',
+        modalContent: `<p>Събрани данни от <a href="http://www.mfa.bg">Министерство на външните работи</a> на Република България относно необходимите документи и препоръки за пътуване в чужбина. Данните се обновяват автоматично&nbsp;при промяна на сайта на министерството.</p>
+
+<p>Картата разполага с два слоя:
+<ul>
+  <li><strong>Обстановка</strong> - актуално състояние на обстановката в съответната страна и препоръката на Министерството на външните работи относно пътуване до там</li>
+  <li><strong>Необходими документи</strong> - необходими документи при пътуване в чужбина. В някои страни от Европа е разрешено пътуването само с лична карта, във всички останали е необходим международен паспорт.</li>
+</ul>
+</p>
+
+<p>Идеята за това приложение дойде случайно, когато ме попитаха дали има нужда от виза, когато се пътува за определена държава. В крайна сметка не открих готови карти с подобна информация за български граждани, затова се наложи аз да създам такава.</p>
+
+<p>Автор - Иван Иванов <a href="https://twitter.com/suricactus">@suricactus</a><br />
+Отворен код - MIT <a href="http://github.com/suricactus/mfa_travel">GitHub</a><br />
+Отворени данни - Creative Commons BY SA</p>`
+      };
+      const defaultStyle = {
+        fillColor: 'grey',
+        weight: 2,
+        opacity: 1,
+        color: 'white',  //Outline color
+        fillOpacity: 0.8
+      };
+      const colors = {
+        1: 'green',
+        2: 'yellow',
+        3: 'orange',
+        4: 'red',
+        5: 'darkred',
+        default: 'grey'
+      };
+      const styles = {
+        withoutPassport: {
+          ...defaultStyle,
+          fillColor: 'green',
+        },
+        doesntRequireVisa: {
+          ...defaultStyle,
+          fillColor: 'lightgreen',
+        },
+        requiresVisa: {
+          ...defaultStyle,
+          fillColor: 'red',
+        },
+        default: defaultStyle,
+        home: {
+          ...defaultStyle,
+          fillColor: 'blue',
+        },
+      };
+
+      const buildTable = (data) => {
+        let html = '';
+
+        html += '<table class="popup-table"><tbody>';
+        
+        data.forEach((row) => {
+          html += '<tr>';
+
+          row.forEach((cell) => {
+            html += '<td>';
+            html += cell;
+            html += '</td>';
+          });
+          
+          html += '</tr>';
+        });
+        html += '</table></tbody>';
+
+        return html;
+      };
+
+      const prepareTableData = (feature) => {
+        const table = [];
+
+        table.push([i18n.name, feature.properties.name_bg || feature.properties.name_en]);
+
+        if(isNaN(+feature.properties.iso_a3)) {
+          table.push([i18n.iso_code, feature.properties.iso_a3]);
+        }
+        
+        if(!feature.properties.home_country) {
+          table.push([i18n.requires_passport, humanizeFlag(feature.properties.requires_passport)]);
+          table.push([i18n.requires_visa, humanizeFlag(feature.properties.requires_visa)]); 
+        }
+        if(feature.properties.notes) {
+          table.push([i18n.notes, feature.properties.notes])
+        }
+
+        if(feature.properties.status >= 0) {
+          table.push([i18n.status, i18n['status' + feature.properties.status]])
+        }
+
+        if(feature.properties.url) {
+          table.push([i18n.more, '<a href="' + feature.properties.url + '" target="_blank">' + i18n.mfa + '</a>']);
+        }
+
+        return table;
+      };
+
+      const humanizeFlag = (isNeeded) => {
+        return (isNeeded === true) ? i18n.yes : (isNeeded === false) ? i18n.no : i18n.unknown;
+      };
+
+      const getStatusColor = (status) => {
+        return colors[status] || colors['default']; 
+      };
+
+      const documentsLayer = L.geoJson.ajax('../data/countries_final.geo.json', {
+        style: (feature) => {
+          if(feature.properties.home_country) {
+            return styles.home;
+          } else if (feature.properties.requires_passport === false) {
+            return styles.withoutPassport;
+          } else if (feature.properties.requires_visa === true) {
+            return styles.requiresVisa;
+          } else if( feature.properties.requires_visa === false) {
+            return styles.doesntRequireVisa;
+          }
+
+          return styles.default;
+        },
+        onEachFeature: (feature, layer) => {
+          layer.bindTooltip(feature.properties.name_bg || feature.properties.name_en, { sticky: true })
+          layer.bindPopup(buildTable(prepareTableData(feature)), { sticky: true })
+        },
+      });
+
+      const recommendationsLayer = L.geoJson.ajax('../data/countries_final.geo.json', {
+        style: (feature) => {
+          if(feature.properties.home_country) {
+            return styles.home;
+          }
+
+          return {
+            ...styles.default,
+            fillColor: getStatusColor(feature.properties.status)
+          };
+        },
+        onEachFeature: (feature, layer) => {
+          layer.bindTooltip(feature.properties.name_bg || feature.properties.name_en, { sticky: true })
+          layer.bindPopup(buildTable(prepareTableData(feature)), { sticky: true })
+        },
+      });
+
+      const createLegend = (legendItems, customClass = '') => {
+        const legend = L.control({position: 'bottomright'});
+
+        legend.onAdd = (map) => {
+          const div = L.DomUtil.create('div', `info legend ${customClass}`);
+        
+
+          for (let i = 0; i < legendItems.length; i++) {
+            div.innerHTML += `<p><i style="background:${legendItems[i].color}"></i>${legendItems[i].msg}</p>`;
+          }
+
+          return div;
+        }
+
+        return legend;
+      }
+
+      const recommendationsLegend = createLegend([
+        { msg: i18n.unknown, color: getStatusColor(-1) },
+        { msg: i18n['status' + 1], color: getStatusColor(1) },
+        { msg: i18n['status' + 2], color: getStatusColor(2) },
+        { msg: i18n['status' + 3], color: getStatusColor(3) },
+        { msg: i18n['status' + 4], color: getStatusColor(4) },
+        { msg: i18n['status' + 5], color: getStatusColor(5) },
+      ], 'limited-legend');
+  
+      const documentsLegend = createLegend([
+        { msg: i18n.unknown, color: styles.default.fillColor },
+        { msg: i18n.withoutPassport, color: styles.withoutPassport.fillColor },
+        { msg: i18n.requiresVisa, color: styles.requiresVisa.fillColor },
+        { msg: i18n.doesntRequireVisa, color: styles.doesntRequireVisa.fillColor }
+      ]);
+
+      const baseMaps = {
+        [i18n.mfaStatus]: recommendationsLayer,
+        [i18n.requiredDocuments]: documentsLayer
+      };
+
+      const searchControl = new L.Control.Search({
+        layer: recommendationsLayer,
+        propertyName: 'name_bg',
+        marker: false,
+        moveToLocation: (latlng, title, map) => {
+          const zoom = map.getBoundsZoom(latlng.layer.getBounds());
+          map.setView(latlng, zoom);
+        }
+      });
+
+      searchControl.on('search:locationfound', (e) => {
+        e.layer.setStyle({ fillColor: 'purple' });
+        
+        if(e.layer._popup) {
+          e.layer.openPopup();
+        }
+      }).on('search:collapsed', (e) => {
+        searchControl._layer.eachLayer((layer) => {
+          searchControl._layer.resetStyle(layer);
+        }); 
+      });
+     
+      const displayLegend = (baseLayer) => {
+        if(baseLayer === recommendationsLayer) {
+          documentsLegend.remove();
+          recommendationsLegend.addTo(map);
+          
+          searchControl.setLayer(recommendationsLayer);
+        } else {
+          recommendationsLegend.remove();
+          documentsLegend.addTo(map);
+
+          searchControl.setLayer(documentsLayer);
+        }
+
+        if(!isLegendVisible) {
+          documentsLegend.remove();
+          recommendationsLegend.remove();
+        }
+      }
+
+      let currentActiveBaseLayer = recommendationsLayer;
+      let isLegendVisible = true;
+      
+      const map = L.map('map', {
+        center: [30, 30],
+        zoom: 3,
+        layers: recommendationsLayer
+      });
+
+      const modal = L.control.window(map,{
+        title: i18n.modalTitle,
+        content: i18n.modalContent,
+        modal: true
+      });
+
+      map.on('baselayerchange', (e) => {
+        currentActiveBaseLayer = e.layer;
+        displayLegend(currentActiveBaseLayer);
+      });
+
+      L.control.layers(baseMaps).addTo(map);
+      
+      map.addControl(searchControl);  //inizialize search control
+      displayLegend(recommendationsLayer);
+
+      const toggleLegendControl = L.Control.extend({
+        options: {
+          position: 'topleft' 
+        },
+       
+        onAdd: (map) => {
+          const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom leaflet-control-active');
+
+          container.style.backgroundImage = 'url(./img/map-marker.png)';
+          container.title = i18n.legend;
+
+          container.onclick = () => {
+            isLegendVisible = !isLegendVisible;
+
+            displayLegend(currentActiveBaseLayer);
+
+            container.classList.toggle('leaflet-control-active');
+          }
+
+          return container;
+        }
+       
+      });
+
+      const toggleInfoControl = L.Control.extend({
+        options: {
+          position: 'topleft' 
+        },
+       
+        onAdd: (map) => {
+          const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
+
+          container.style.backgroundImage = 'url(./img/info-sign.png)';
+          container.title = i18n.about;
+
+          container.onclick = () => {
+            modal.show();
+          }
+
+          return container;
+        }
+      });
+
+      map.addControl(new toggleLegendControl());
+      map.addControl(new toggleInfoControl());
+
+
+    })(window, document);
+  </script>
+</body>
+</html>
